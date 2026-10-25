@@ -39,11 +39,13 @@ The virtual environment, generated model files, and assignment PDF are excluded 
 
 ## Deploy the app publicly with Render
 
-GitHub hosts the source code; it does not run this FastAPI backend. To make the app available at a public URL:
+GitHub Pages can display static files, but it cannot run the FastAPI prediction backend. For a fully working app, deploy it to Render and use the Render service URL (not the `github.io` URL):
 
 1. Push the project to a GitHub repository.
 2. Sign in to [Render](https://render.com/) and choose **New** > **Blueprint**.
 3. Connect the GitHub repository and deploy the blueprint. Render reads [`render.yaml`](render.yaml), installs the dependencies, trains the models, and starts the web service.
-4. Open the public URL Render assigns to the service. The app and API docs are available at `/` and `/docs`.
+4. Open the public URL Render assigns to the service. The app and API docs are available at `/` and `/docs`; the prediction forms work there because the frontend and API are served by the same service.
+
+The frontend asset links are relative, so GitHub Pages can load the styling and script under a project URL. Prediction forms still require the FastAPI backend and will not work on GitHub Pages alone.
 
 The deployment uses the included dataset and does not require secrets or environment variables. The prediction API is public and has no authentication, so do not add private data to this app without adding appropriate access controls.
