@@ -5,6 +5,8 @@ A FastAPI web app that trains and serves two scikit-learn models using the inclu
 - **Vote-count regression:** Predicts votes from a game's ranking and release year.
 - **Primary-genre classification:** Predicts a game's first listed genre from ranking, release year, and vote count. Genres with fewer than 15 examples are grouped as `Other`.
 
+The classifier includes an optional game-name search that fills in the selected game's ranking, release year, and vote count from the dataset. Results distinguish the predicted primary genre from the game's full dataset genre tags and report prediction confidence separately from held-out test accuracy.
+
 The training script skips blank or incomplete CSV rows and saves the fitted models under `models/`. It prints held-out R² and accuracy scores after training. The genre data is imbalanced, so interpret accuracy in that context.
 
 ## Run locally (Windows)

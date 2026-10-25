@@ -11,9 +11,19 @@ const forms = [
     resultId: "classification-result",
     metricId: "classification-metric",
     endpoint: "/predict/classification",
-    format: (data) => `Predicted primary genre: ${data.prediction} · Confidence ${(Number(data.confidence) * 100).toFixed(1)}%`,
+    format: (data, features) => {
+      const selectedGame = gamesByName.get(features.game.toLocaleLowerCase());
+      const gameContext = features.game
+        ? `For ${features.game} (#${features.ranking}, ${features.year}, ${Number(features.votes).toLocaleString("en-US")} votes), `
+        : "For these inputs, ";
+      const listedGenres = selectedGame
+        ? ` Dataset genres: ${selectedGame.genres.join(", ")}.`
+        : "";
+      return `${gameContext}the model predicts ${data.prediction} as the primary genre (${(Number(data.confidence) * 100).toFixed(1)}% confidence; ${(Number(data.accuracy) * 100).toFixed(1)}% test accuracy).${listedGenres}`;
+    },
   },
 ];
+const gamesByName = new Map();
 
 for (const config of forms) {
   const form = document.getElementById(config.formId);
@@ -27,10 +37,13 @@ for (const config of forms) {
     button.disabled = true;
     button.textContent = "Running model…";
 
-    const features = Object.fromEntries(new FormData(form).entries());
-    for (const [key, value] of Object.entries(features)) {
-      features[key] = Number(value);
-    }
+    const formData = new FormData(form);
+    const game = String(formData.get("game") || "").trim();
+    const features = Object.fromEntries(
+      [...formData]
+        .filter(([name]) => name !== "game")
+        .map(([name, value]) => [name, Number(value)]),
+    );
 
     try {
       const response = await fetch(config.endpoint, {
@@ -45,7 +58,7 @@ for (const config of forms) {
           : data.detail;
         throw new Error(detail || "The prediction could not be completed.");
       }
-      result.textContent = config.format(data);
+      result.textContent = config.format(data, { ...features, game });
       document.getElementById(config.metricId).textContent =
         config.endpoint.endsWith("regression")
           ? `R² ${Number(data.r2).toFixed(3)}`
@@ -60,3 +73,48 @@ for (const config of forms) {
     }
   });
 }
+
+async function loadGameLookup() {
+  const response = await fetch("/static/games.json");
+  if (!response.ok) {
+    throw new Error(`Game list could not be loaded (${response.status}).`);
+  }
+
+  const games = await response.json();
+  const form = document.getElementById("classification-form");
+  const gameInput = form.elements.game;
+  const gameOptions = document.getElementById("game-options");
+  const gameStatus = document.getElementById("game-lookup-status");
+  gamesByName.clear();
+  games.forEach((game) =>
+    gamesByName.set(game.name.toLocaleLowerCase(), game),
+  );
+
+  gameOptions.replaceChildren(
+    ...games.map((game) => {
+      const option = document.createElement("option");
+      option.value = game.name;
+      return option;
+    }),
+  );
+
+  gameInput.addEventListener("change", () => {
+    const game = gamesByName.get(gameInput.value.trim().toLocaleLowerCase());
+    if (!game) {
+      return;
+    }
+
+    form.elements.ranking.value = game.ranking;
+    form.elements.year.value = game.year;
+    form.elements.votes.value = game.votes;
+  });
+
+  gameStatus.textContent =
+    "Choose a title to automatically fill its ranking, year, and vote count.";
+}
+
+loadGameLookup().catch((error) => {
+  document.getElementById("game-lookup-status").textContent =
+    "Game names could not be loaded. You can still enter the numeric features manually.";
+  console.error(error);
+});
