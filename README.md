@@ -22,30 +22,20 @@ uvicorn app:app --reload
 
 Open <http://127.0.0.1:8000> for the prediction forms, <http://127.0.0.1:8000/docs> for interactive API documentation, or <http://127.0.0.1:8000/health> to check service health.
 
-## Publish the source on GitHub
+## GitHub source repository
 
-Create a **public** repository on GitHub, then run these commands from this project directory (replace the URL with your repository's URL):
-
-```powershell
-git init
-git add .
-git commit -m "Prepare app for public deployment"
-git branch -M main
-git remote add origin https://github.com/YOUR-USERNAME/YOUR-REPOSITORY.git
-git push -u origin main
-```
+This project is maintained in [Lupin-Codes2/Machine-Learning-Model](https://github.com/Lupin-Codes2/Machine-Learning-Model). Push changes to its `main` branch; Render can use that repository as its deployment source.
 
 The virtual environment, generated model files, and assignment PDF are excluded from Git. The CSV dataset is included because the deployment needs it to train the models. Before making the repository public, make sure you have permission to share the dataset.
 
 ## Deploy the app publicly with Render
 
-GitHub Pages can display static files, but it cannot run the FastAPI prediction backend. For a fully working app, deploy it to Render and use the Render service URL (not the `github.io` URL):
+GitHub stores the source code; Render runs the FastAPI app. For the complete working app, connect Render to **Lupin-Codes2/Machine-Learning-Model** and use the Render service URL (not the `github.io` URL):
 
-1. Push the project to a GitHub repository.
-2. Sign in to [Render](https://render.com/) and choose **New** > **Blueprint**.
-3. Connect the GitHub repository and deploy the blueprint. Render reads [`render.yaml`](render.yaml), installs the dependencies, trains the models, and starts the web service.
-4. Open the public URL Render assigns to the service. The app and API docs are available at `/` and `/docs`; the prediction forms work there because the frontend and API are served by the same service.
+1. In [Render](https://render.com/), choose **New** > **Blueprint** and connect the `Lupin-Codes2/Machine-Learning-Model` repository.
+2. Render reads [`render.yaml`](render.yaml), installs the dependencies, trains the models, and starts the web service.
+3. Open the `onrender.com` URL shown for that service. The app and API docs are available at `/` and `/docs`; the prediction forms work there because the frontend and API are served by the same service.
 
-The frontend asset links are relative, so GitHub Pages can load the styling and script under a project URL. Prediction forms still require the FastAPI backend and will not work on GitHub Pages alone.
+When the Render service is connected to the repository, pushes to `main` can trigger a new deployment. GitHub Pages is a separate static site and cannot run this FastAPI backend; use its `github.io` URL only for static content.
 
 The deployment uses the included dataset and does not require secrets or environment variables. The prediction API is public and has no authentication, so do not add private data to this app without adding appropriate access controls.
